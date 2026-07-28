@@ -1,11 +1,14 @@
 package com.tarun.HospitalManagement.service;
 
-import com.tarun.HospitalManagement.repository.AppointmentRepository;
-import com.tarun.HospitalManagement.repository.DoctorRepository;
-import com.tarun.HospitalManagement.repository.PatientRepository;
+import com.tarun.HospitalManagement.dto.request.AppointmentRequestDTO;
+import com.tarun.HospitalManagement.dto.response.AppointmentResponseDTO;
 import com.tarun.HospitalManagement.entity.Appointment;
 import com.tarun.HospitalManagement.entity.Doctor;
 import com.tarun.HospitalManagement.entity.Patient;
+import com.tarun.HospitalManagement.mapper.AppointmentMapper;
+import com.tarun.HospitalManagement.repository.AppointmentRepository;
+import com.tarun.HospitalManagement.repository.DoctorRepository;
+import com.tarun.HospitalManagement.repository.PatientRepository;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -20,66 +23,64 @@ public class AppointmentService {
     private final AppointmentRepository appointmentRepository;
     private final DoctorRepository doctorRepository;
     private final PatientRepository patientRepository;
+    private final AppointmentMapper appointmentMapper;
 
     @Transactional
-    public void createNewAppointment(Appointment appointment, Long doctorId, Long PatientId){
+    public void createNewAppointment(AppointmentRequestDTO dto, Long doctorId, Long patientId) {
         Doctor doctor = doctorRepository.findById(doctorId).orElseThrow();
-        Patient patient = patientRepository.findById(PatientId).orElseThrow();
+        Patient patient = patientRepository.findById(patientId).orElseThrow();
 
-        if(appointment.getId() != null) throw new IllegalArgumentException("appointment should not exist");
+        Appointment appointment = appointmentMapper.toEntity(dto);
 
         appointment.setPatient(patient);
         appointment.setDoctor(doctor);
 
         patient.getAppointment().add(appointment);
         doctor.getAppointmentList().add(appointment);
-
-        Doctor oldDoctor = appointment.getDoctor();
-        if (oldDoctor != null) {
-            oldDoctor.getAppointmentList().remove(appointment);
-        }
-
-        appointment.setDoctor(doctor);
-        doctor.getAppointmentList().add(appointment);
     }
 
     @Transactional
-    public Appointment reAssignAppointmentToAnotherDoctr(Long appointmentId, Long doctorId){
+    public AppointmentResponseDTO reAssignAppointmentToAnotherDoctr(Long appointmentId, Long doctorId) {
         Appointment appointment = appointmentRepository.findById(appointmentId).orElseThrow();
         Doctor doctor = doctorRepository.findById(doctorId).orElseThrow();
 
         appointment.setDoctor(doctor);
 
-        //doctor.getAppointments().add(appointment);
-
-        return appointment;
+        return appointmentMapper.toResponseDTO(appointment);
     }
 
-    //get All Appointments
-    public List<Appointment> getAllAppointments(){
-        return appointmentRepository.findAll();
+    @Transactional
+    public List<AppointmentResponseDTO> getAllAppointments() {
+        return appointmentRepository.findAll().stream()
+                .map(appointmentMapper::toResponseDTO)
+                .toList();
     }
 
-    public Appointment getAppointmentById(Long id) {
-        return appointmentRepository.findById(id)
+    @Transactional
+    public AppointmentResponseDTO getAppointmentById(Long id) {
+        Appointment appointment = appointmentRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Appointment not found"));
+        return appointmentMapper.toResponseDTO(appointment);
     }
 
-    public List<Appointment> getAppointmentsByDoctor(Long doctorId) {
+    @Transactional
+    public List<AppointmentResponseDTO> getAppointmentsByDoctor(Long doctorId) {
         Doctor doctor = doctorRepository.findById(doctorId)
                 .orElseThrow(() -> new RuntimeException("Doctor not found"));
-        return doctor.getAppointmentList();
+        return appointmentMapper.toResponseDTOList(doctor.getAppointmentList());
     }
 
-    public List<Appointment> getAppointmentsByPatient(Long patientId) {
+    @Transactional
+    public List<AppointmentResponseDTO> getAppointmentsByPatient(Long patientId) {
         Patient patient = patientRepository.findById(patientId)
                 .orElseThrow(() -> new RuntimeException("Patient not found"));
-        return patient.getAppointment();
+        return appointmentMapper.toResponseDTOList(patient.getAppointment());
     }
 
     @Transactional
     public void deleteAppointment(Long appointmentId) {
-        Appointment appointment = getAppointmentById(appointmentId);
+        Appointment appointment = appointmentRepository.findById(appointmentId)
+                .orElseThrow(() -> new RuntimeException("Appointment not found"));
         Patient patient = appointment.getPatient();
         Doctor doctor = appointment.getDoctor();
         if (patient != null) {
@@ -92,20 +93,27 @@ public class AppointmentService {
     }
 
     @Transactional
-    public Appointment updateAppointmentTime(Long appointmentId, LocalDateTime newTime) {
-        Appointment appointment = getAppointmentById(appointmentId);
+    public AppointmentResponseDTO updateAppointmentTime(Long appointmentId, LocalDateTime newTime) {
+        Appointment appointment = appointmentRepository.findById(appointmentId)
+                .orElseThrow(() -> new RuntimeException("Appointment not found"));
         appointment.setAppointmentTime(newTime);
-        return appointmentRepository.save(appointment);
+        Appointment saved = appointmentRepository.save(appointment);
+        return appointmentMapper.toResponseDTO(saved);
     }
 
     @Transactional
-    public Appointment updateReason(Long appointmentId, String reason) {
-        Appointment appointment = getAppointmentById(appointmentId);
+    public AppointmentResponseDTO updateReason(Long appointmentId, String reason) {
+        Appointment appointment = appointmentRepository.findById(appointmentId)
+                .orElseThrow(() -> new RuntimeException("Appointment not found"));
         appointment.setReason(reason);
-        return appointmentRepository.save(appointment);
+        Appointment saved = appointmentRepository.save(appointment);
+        return appointmentMapper.toResponseDTO(saved);
     }
 
-    public List<Appointment> getAppointmentsBetweenDates(LocalDateTime start, LocalDateTime end) {
-        return appointmentRepository.findByAppointmentTimeBetween(start, end);
+    @Transactional
+    public List<AppointmentResponseDTO> getAppointmentsBetweenDates(LocalDateTime start, LocalDateTime end) {
+        return appointmentRepository.findByAppointmentTimeBetween(start, end).stream()
+                .map(appointmentMapper::toResponseDTO)
+                .toList();
     }
 }
