@@ -1,11 +1,17 @@
 package com.tarun.HospitalManagement.service;
 
-import com.tarun.HospitalManagement.entity.Insurance;
+import com.tarun.HospitalManagement.dto.BloodGroupCountResponseEntity;
+import com.tarun.HospitalManagement.dto.request.PatientRequestDTO;
+import com.tarun.HospitalManagement.dto.response.AppointmentResponseDTO;
+import com.tarun.HospitalManagement.dto.response.PatientResponseDTO;
 import com.tarun.HospitalManagement.entity.Appointment;
+import com.tarun.HospitalManagement.entity.Insurance;
+import com.tarun.HospitalManagement.entity.Patient;
 import com.tarun.HospitalManagement.entity.type.BloodGroupType;
+import com.tarun.HospitalManagement.mapper.AppointmentMapper;
+import com.tarun.HospitalManagement.mapper.PatientMapper;
 import com.tarun.HospitalManagement.repository.InsuranceRepository;
 import com.tarun.HospitalManagement.repository.PatientRepository;
-import com.tarun.HospitalManagement.entity.Patient;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -16,59 +22,74 @@ import java.util.List;
 @Service
 @RequiredArgsConstructor
 public class PatientService {
-    
+
     private final PatientRepository patientRepository;
     private final InsuranceRepository insuranceRepository;
+    private final PatientMapper patientMapper;
+    private final AppointmentMapper appointmentMapper;
 
     @Transactional
-    public Patient getPatientById(long id){
-        Patient p1=patientRepository.findById(id).orElseThrow();
-        Patient p2=patientRepository.findById(id).orElseThrow();
-        System.out.println(p1==p2);
-        p1.setName("yoyo");
-
-        return p1;
-    }
-
-    @Transactional
-    public Patient createPatient(Patient patient){
-        return patientRepository.save(patient);
-    }
-
-    public Patient getPatientById(Long id){
-        return patientRepository.findById(id).orElseThrow();
-    }
-
-    public List<Patient> getAllPatients(){
-        return patientRepository.findAll();
+    public PatientResponseDTO createPatient(PatientRequestDTO dto) {
+        Patient patient = patientMapper.toEntity(dto);
+        if (dto.getInsuranceId() != null) {
+            Insurance insurance = insuranceRepository.findById(dto.getInsuranceId())
+                    .orElseThrow(() -> new RuntimeException("Insurance not found"));
+            patient.setInsurance(insurance);
+        }
+        Patient saved = patientRepository.save(patient);
+        return patientMapper.toResponseDTO(saved);
     }
 
     @Transactional
-    public void deletePatient(Long id){
+    public PatientResponseDTO getPatientById(Long id) {
+        Patient patient = patientRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Patient not found"));
+        return patientMapper.toResponseDTO(patient);
+    }
+
+    @Transactional
+    public List<PatientResponseDTO> getAllPatients() {
+        return patientRepository.findAll().stream()
+                .map(patientMapper::toResponseDTO)
+                .toList();
+    }
+
+    @Transactional
+    public void deletePatient(Long id) {
         if (!patientRepository.existsById(id)) {
             throw new RuntimeException("Patient not found");
         }
         patientRepository.deleteById(id);
     }
 
-    public Patient searchByName(String name){
-        if(name==null){
+    @Transactional
+    public PatientResponseDTO searchByName(String name) {
+        if (name == null) {
             throw new IllegalArgumentException("name does not exist");
         }
-        return patientRepository.findByName(name);
+        Patient patient = patientRepository.findByName(name);
+        return patientMapper.toResponseDTO(patient);
     }
 
-    public List<Patient> getPatientsByBirthDateRange(LocalDate start, LocalDate end) {
-        return patientRepository.findByBirthDateBetween(start, end);
+    @Transactional
+    public List<PatientResponseDTO> getPatientsByBirthDateRange(LocalDate start, LocalDate end) {
+        return patientRepository.findByBirthDateBetween(start, end).stream()
+                .map(patientMapper::toResponseDTO)
+                .toList();
     }
 
-    public List<Patient> getPatientsByBloodGroup(BloodGroupType bloodGroup) {
-        return patientRepository.findByBloodGroup(bloodGroup);
+    @Transactional
+    public List<PatientResponseDTO> getPatientsByBloodGroup(BloodGroupType bloodGroup) {
+        return patientRepository.findByBloodGroup(bloodGroup).stream()
+                .map(patientMapper::toResponseDTO)
+                .toList();
     }
 
-    public List<Appointment> getPatientAppointments(Long patientId) {
-        Patient patient = getPatientById(patientId);
-        return patient.getAppointment();
+    @Transactional
+    public List<AppointmentResponseDTO> getPatientAppointments(Long patientId) {
+        Patient patient = patientRepository.findById(patientId)
+                .orElseThrow(() -> new RuntimeException("Patient not found"));
+        return appointmentMapper.toResponseDTOList(patient.getAppointment());
     }
 
     @Transactional
@@ -80,13 +101,18 @@ public class PatientService {
     }
 
     @Transactional
-    public void removeInsurance(Long patientId){
-        Patient patient = patientRepository.findById(patientId).orElseThrow(()->new RuntimeException("patient id does not exist"));
+    public void removeInsurance(Long patientId) {
+        Patient patient = patientRepository.findById(patientId)
+                .orElseThrow(() -> new RuntimeException("patient id does not exist"));
         Insurance insurance = patient.getInsurance();
         if (insurance != null) {
             patient.setInsurance(null);
             insurance.setPatient(null);
             insuranceRepository.delete(insurance);
         }
+    }
+
+    public List<BloodGroupCountResponseEntity> countEachByBloodGroupType() {
+        return patientRepository.countEachByBloodGroupType();
     }
 }

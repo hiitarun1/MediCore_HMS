@@ -1,8 +1,14 @@
 package com.tarun.HospitalManagement.service;
 
-import com.tarun.HospitalManagement.entity.Appointment;
+import com.tarun.HospitalManagement.dto.request.DoctorRequestDTO;
+import com.tarun.HospitalManagement.dto.response.AppointmentResponseDTO;
+import com.tarun.HospitalManagement.dto.response.DepartmentResponseDTO;
+import com.tarun.HospitalManagement.dto.response.DoctorResponseDTO;
 import com.tarun.HospitalManagement.entity.Department;
 import com.tarun.HospitalManagement.entity.Doctor;
+import com.tarun.HospitalManagement.mapper.AppointmentMapper;
+import com.tarun.HospitalManagement.mapper.DepartmentMapper;
+import com.tarun.HospitalManagement.mapper.DoctorMapper;
 import com.tarun.HospitalManagement.repository.DepartmentRepository;
 import com.tarun.HospitalManagement.repository.DoctorRepository;
 import jakarta.transaction.Transactional;
@@ -11,6 +17,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -18,19 +25,29 @@ public class DoctorService {
 
     private final DoctorRepository doctorRepository;
     private final DepartmentRepository departmentRepository;
+    private final DoctorMapper doctorMapper;
+    private final AppointmentMapper appointmentMapper;
+    private final DepartmentMapper departmentMapper;
 
     @Transactional
-    public Doctor createDoctor(Doctor doctor) {
-        return doctorRepository.save(doctor);
+    public DoctorResponseDTO createDoctor(DoctorRequestDTO dto) {
+        Doctor doctor = doctorMapper.toEntity(dto);
+        Doctor saved = doctorRepository.save(doctor);
+        return doctorMapper.toResponseDTO(saved);
     }
 
-    public Doctor getDoctorById(Long id) {
-        return doctorRepository.findById(id)
+    @Transactional
+    public DoctorResponseDTO getDoctorById(Long id) {
+        Doctor doctor = doctorRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Doctor not found"));
+        return doctorMapper.toResponseDTO(doctor);
     }
 
-    public List<Doctor> getAllDoctors() {
-        return doctorRepository.findAll();
+    @Transactional
+    public List<DoctorResponseDTO> getAllDoctors() {
+        return doctorRepository.findAll().stream()
+                .map(doctorMapper::toResponseDTO)
+                .toList();
     }
 
     @Transactional
@@ -42,38 +59,49 @@ public class DoctorService {
     }
 
     @Transactional
-    public Doctor updateDoctorEmail(Long id, String email) {
-        Doctor doctor = getDoctorById(id);
+    public DoctorResponseDTO updateDoctorEmail(Long id, String email) {
+        Doctor doctor = doctorRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Doctor not found"));
         doctor.setEmail(email);
-        return doctorRepository.save(doctor);
+        Doctor saved = doctorRepository.save(doctor);
+        return doctorMapper.toResponseDTO(saved);
     }
 
     @Transactional
-    public Doctor updateSpecialization(Long id, String specialization) {
-        Doctor doctor = getDoctorById(id);
+    public DoctorResponseDTO updateSpecialization(Long id, String specialization) {
+        Doctor doctor = doctorRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Doctor not found"));
         doctor.setSpecialization(specialization);
-        return doctorRepository.save(doctor);
+        Doctor saved = doctorRepository.save(doctor);
+        return doctorMapper.toResponseDTO(saved);
     }
 
-    public List<Appointment> getDoctorAppointments(Long doctorId) {
-        Doctor doctor = getDoctorById(doctorId);
-        return doctor.getAppointmentList();
+    @Transactional
+    public List<AppointmentResponseDTO> getDoctorAppointments(Long doctorId) {
+        Doctor doctor = doctorRepository.findById(doctorId)
+                .orElseThrow(() -> new RuntimeException("Doctor not found"));
+        return appointmentMapper.toResponseDTOList(doctor.getAppointmentList());
     }
 
-    public Set<Department> getDoctorDepartments(Long doctorId) {
-        Doctor doctor = getDoctorById(doctorId);
-        return doctor.getDepartments();
+    @Transactional
+    public Set<DepartmentResponseDTO> getDoctorDepartments(Long doctorId) {
+        Doctor doctor = doctorRepository.findById(doctorId)
+                .orElseThrow(() -> new RuntimeException("Doctor not found"));
+        return doctor.getDepartments().stream()
+                .map(departmentMapper::toResponseDTO)
+                .collect(Collectors.toSet());
     }
 
     @Transactional
     public void assignDoctorToDepartment(Long doctorId, Long departmentId) {
-        Doctor doctor = getDoctorById(doctorId);
+        Doctor doctor = doctorRepository.findById(doctorId)
+                .orElseThrow(() -> new RuntimeException("Doctor not found"));
         Department department = departmentRepository.findById(departmentId)
                 .orElseThrow(() -> new RuntimeException("Department not found"));
-        
+
         department.getDoctors().add(doctor);
         doctor.getDepartments().add(department);
-        
+
         doctorRepository.save(doctor);
         departmentRepository.save(department);
     }
