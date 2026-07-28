@@ -1,15 +1,17 @@
 package com.tarun.HospitalManagement.controller;
 
 import com.tarun.HospitalManagement.dto.BloodGroupCountResponseEntity;
-import com.tarun.HospitalManagement.entity.Appointment;
-import com.tarun.HospitalManagement.entity.Patient;
+import com.tarun.HospitalManagement.dto.request.PatientRequestDTO;
+import com.tarun.HospitalManagement.dto.response.AppointmentResponseDTO;
+import com.tarun.HospitalManagement.dto.response.PatientResponseDTO;
 import com.tarun.HospitalManagement.entity.type.BloodGroupType;
-import com.tarun.HospitalManagement.repository.PatientRepository;
 import com.tarun.HospitalManagement.service.PatientService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.format.annotation.DateTimeFormat;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -23,23 +25,22 @@ import java.util.List;
 public class PatientController {
 
     private final PatientService patientService;
-    private final PatientRepository patientRepository;
 
     @PostMapping
     @Operation(summary = "Create a new patient record")
-    public ResponseEntity<Patient> createPatient(@RequestBody Patient patient) {
-        return ResponseEntity.ok(patientService.createPatient(patient));
+    public ResponseEntity<PatientResponseDTO> createPatient(@Valid @RequestBody PatientRequestDTO dto) {
+        return ResponseEntity.status(HttpStatus.CREATED).body(patientService.createPatient(dto));
     }
 
     @GetMapping("/{id}")
     @Operation(summary = "Get a patient by ID")
-    public ResponseEntity<Patient> getPatientById(@PathVariable Long id) {
+    public ResponseEntity<PatientResponseDTO> getPatientById(@PathVariable Long id) {
         return ResponseEntity.ok(patientService.getPatientById(id));
     }
 
     @GetMapping
     @Operation(summary = "Get all patient records")
-    public ResponseEntity<List<Patient>> getAllPatients() {
+    public ResponseEntity<List<PatientResponseDTO>> getAllPatients() {
         return ResponseEntity.ok(patientService.getAllPatients());
     }
 
@@ -52,13 +53,13 @@ public class PatientController {
 
     @GetMapping("/search")
     @Operation(summary = "Search for a patient by exact name")
-    public ResponseEntity<Patient> searchByName(@RequestParam String name) {
+    public ResponseEntity<PatientResponseDTO> searchByName(@RequestParam String name) {
         return ResponseEntity.ok(patientService.searchByName(name));
     }
 
     @GetMapping("/birthdate")
     @Operation(summary = "Get patients born within a specific date range")
-    public ResponseEntity<List<Patient>> getPatientsByBirthDateRange(
+    public ResponseEntity<List<PatientResponseDTO>> getPatientsByBirthDateRange(
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate start,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate end) {
         return ResponseEntity.ok(patientService.getPatientsByBirthDateRange(start, end));
@@ -66,19 +67,19 @@ public class PatientController {
 
     @GetMapping("/bloodgroup/{bloodGroup}")
     @Operation(summary = "Get patients with a specific blood group")
-    public ResponseEntity<List<Patient>> getPatientsByBloodGroup(@PathVariable BloodGroupType bloodGroup) {
+    public ResponseEntity<List<PatientResponseDTO>> getPatientsByBloodGroup(@PathVariable BloodGroupType bloodGroup) {
         return ResponseEntity.ok(patientService.getPatientsByBloodGroup(bloodGroup));
     }
 
     @GetMapping("/bloodgroup/count")
     @Operation(summary = "Get patients count grouped by blood group")
     public ResponseEntity<List<BloodGroupCountResponseEntity>> countEachByBloodGroupType() {
-        return ResponseEntity.ok(patientRepository.countEachByBloodGroupType());
+        return ResponseEntity.ok(patientService.countEachByBloodGroupType());
     }
 
     @GetMapping("/{id}/appointments")
     @Operation(summary = "Get all appointments for a patient")
-    public ResponseEntity<List<Appointment>> getPatientAppointments(@PathVariable Long id) {
+    public ResponseEntity<List<AppointmentResponseDTO>> getPatientAppointments(@PathVariable Long id) {
         return ResponseEntity.ok(patientService.getPatientAppointments(id));
     }
 

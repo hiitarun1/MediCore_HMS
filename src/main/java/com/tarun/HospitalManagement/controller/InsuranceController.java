@@ -1,11 +1,14 @@
 package com.tarun.HospitalManagement.controller;
 
-import com.tarun.HospitalManagement.entity.Insurance;
-import com.tarun.HospitalManagement.entity.Patient;
+import com.tarun.HospitalManagement.dto.request.InsuranceRequestDTO;
+import com.tarun.HospitalManagement.dto.response.InsuranceResponseDTO;
+import com.tarun.HospitalManagement.dto.response.PatientResponseDTO;
 import com.tarun.HospitalManagement.service.InsuranceService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -19,13 +22,13 @@ public class InsuranceController {
 
     @PostMapping
     @Operation(summary = "Create a new insurance record")
-    public ResponseEntity<Insurance> createInsurance(@RequestBody Insurance insurance) {
-        return ResponseEntity.ok(insuranceService.createInsurance(insurance));
+    public ResponseEntity<InsuranceResponseDTO> createInsurance(@Valid @RequestBody InsuranceRequestDTO dto) {
+        return ResponseEntity.status(HttpStatus.CREATED).body(insuranceService.createInsurance(dto));
     }
 
     @GetMapping("/{id}")
     @Operation(summary = "Get an insurance record by ID")
-    public ResponseEntity<Insurance> getInsuranceById(@PathVariable Long id) {
+    public ResponseEntity<InsuranceResponseDTO> getInsuranceById(@PathVariable Long id) {
         return ResponseEntity.ok(insuranceService.getInsuranceById(id));
     }
 
@@ -38,7 +41,7 @@ public class InsuranceController {
 
     @GetMapping("/{id}/patient")
     @Operation(summary = "Get the patient associated with the insurance policy")
-    public ResponseEntity<Patient> getPatientByInsurance(@PathVariable Long id) {
+    public ResponseEntity<PatientResponseDTO> getPatientByInsurance(@PathVariable Long id) {
         return ResponseEntity.ok(insuranceService.getPatientByInsurance(id));
     }
 
@@ -50,9 +53,9 @@ public class InsuranceController {
 
     @PostMapping("/assign")
     @Operation(summary = "Assign a new/existing insurance policy to a patient")
-    public ResponseEntity<Patient> assignInsuranceToPatient(
-            @RequestBody Insurance insurance,
+    public ResponseEntity<PatientResponseDTO> assignInsuranceToPatient(
+            @Valid @RequestBody InsuranceRequestDTO dto,
             @RequestParam Long patientId) {
-        return ResponseEntity.ok(insuranceService.assignInsuranceToPatient(insurance, patientId));
+        return ResponseEntity.ok(insuranceService.assignInsuranceToPatient(dto, patientId));
     }
 }

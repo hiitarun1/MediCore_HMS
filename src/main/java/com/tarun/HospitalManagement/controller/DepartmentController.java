@@ -1,11 +1,14 @@
 package com.tarun.HospitalManagement.controller;
 
-import com.tarun.HospitalManagement.entity.Department;
-import com.tarun.HospitalManagement.entity.Doctor;
+import com.tarun.HospitalManagement.dto.request.DepartmentRequestDTO;
+import com.tarun.HospitalManagement.dto.response.DepartmentResponseDTO;
+import com.tarun.HospitalManagement.dto.response.DoctorSummaryDTO;
 import com.tarun.HospitalManagement.service.DepartmentService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -22,19 +25,19 @@ public class DepartmentController {
 
     @PostMapping
     @Operation(summary = "Create a new department")
-    public ResponseEntity<Department> createDepartment(@RequestBody Department department) {
-        return ResponseEntity.ok(departmentService.createDepartment(department));
+    public ResponseEntity<DepartmentResponseDTO> createDepartment(@Valid @RequestBody DepartmentRequestDTO dto) {
+        return ResponseEntity.status(HttpStatus.CREATED).body(departmentService.createDepartment(dto));
     }
 
     @GetMapping("/{id}")
     @Operation(summary = "Get a department by ID")
-    public ResponseEntity<Department> getDepartmentById(@PathVariable Long id) {
+    public ResponseEntity<DepartmentResponseDTO> getDepartmentById(@PathVariable Long id) {
         return ResponseEntity.ok(departmentService.getDepartmentById(id));
     }
 
     @GetMapping
     @Operation(summary = "Get all departments")
-    public ResponseEntity<List<Department>> getAllDepartments() {
+    public ResponseEntity<List<DepartmentResponseDTO>> getAllDepartments() {
         return ResponseEntity.ok(departmentService.getAllDepartments());
     }
 
@@ -68,7 +71,7 @@ public class DepartmentController {
 
     @GetMapping("/{id}/doctors")
     @Operation(summary = "Get all doctors belonging to a department")
-    public ResponseEntity<Set<Doctor>> getDoctorsInDepartment(@PathVariable Long id) {
+    public ResponseEntity<Set<DoctorSummaryDTO>> getDoctorsInDepartment(@PathVariable Long id) {
         return ResponseEntity.ok(departmentService.getDoctorsInDepartment(id));
     }
 }

@@ -1,11 +1,14 @@
 package com.tarun.HospitalManagement.controller;
 
-import com.tarun.HospitalManagement.entity.Appointment;
+import com.tarun.HospitalManagement.dto.request.AppointmentRequestDTO;
+import com.tarun.HospitalManagement.dto.response.AppointmentResponseDTO;
 import com.tarun.HospitalManagement.service.AppointmentService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.format.annotation.DateTimeFormat;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -23,22 +26,22 @@ public class AppointmentController {
     @PostMapping
     @Operation(summary = "Schedule a new appointment")
     public ResponseEntity<Void> createNewAppointment(
-            @RequestBody Appointment appointment,
+            @Valid @RequestBody AppointmentRequestDTO dto,
             @RequestParam Long doctorId,
             @RequestParam Long patientId) {
-        appointmentService.createNewAppointment(appointment, doctorId, patientId);
-        return ResponseEntity.ok().build();
+        appointmentService.createNewAppointment(dto, doctorId, patientId);
+        return ResponseEntity.status(HttpStatus.CREATED).build();
     }
 
     @GetMapping
     @Operation(summary = "Get all scheduled appointments")
-    public ResponseEntity<List<Appointment>> getAllAppointments() {
+    public ResponseEntity<List<AppointmentResponseDTO>> getAllAppointments() {
         return ResponseEntity.ok(appointmentService.getAllAppointments());
     }
 
     @GetMapping("/{id}")
     @Operation(summary = "Get an appointment by ID")
-    public ResponseEntity<Appointment> getAppointmentById(@PathVariable Long id) {
+    public ResponseEntity<AppointmentResponseDTO> getAppointmentById(@PathVariable Long id) {
         return ResponseEntity.ok(appointmentService.getAppointmentById(id));
     }
 
@@ -51,7 +54,7 @@ public class AppointmentController {
 
     @PutMapping("/{id}/reassign/{doctorId}")
     @Operation(summary = "Reassign an appointment to a different doctor")
-    public ResponseEntity<Appointment> reAssignAppointmentToAnotherDoctr(
+    public ResponseEntity<AppointmentResponseDTO> reAssignAppointmentToAnotherDoctr(
             @PathVariable Long id,
             @PathVariable Long doctorId) {
         return ResponseEntity.ok(appointmentService.reAssignAppointmentToAnotherDoctr(id, doctorId));
@@ -59,7 +62,7 @@ public class AppointmentController {
 
     @PatchMapping("/{id}/time")
     @Operation(summary = "Reschedule appointment time")
-    public ResponseEntity<Appointment> updateAppointmentTime(
+    public ResponseEntity<AppointmentResponseDTO> updateAppointmentTime(
             @PathVariable Long id,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime newTime) {
         return ResponseEntity.ok(appointmentService.updateAppointmentTime(id, newTime));
@@ -67,7 +70,7 @@ public class AppointmentController {
 
     @PatchMapping("/{id}/reason")
     @Operation(summary = "Update the medical reason for the appointment")
-    public ResponseEntity<Appointment> updateReason(
+    public ResponseEntity<AppointmentResponseDTO> updateReason(
             @PathVariable Long id,
             @RequestParam String reason) {
         return ResponseEntity.ok(appointmentService.updateReason(id, reason));
@@ -75,19 +78,19 @@ public class AppointmentController {
 
     @GetMapping("/doctor/{doctorId}")
     @Operation(summary = "Get all appointments scheduled for a specific doctor")
-    public ResponseEntity<List<Appointment>> getAppointmentsByDoctor(@PathVariable Long doctorId) {
+    public ResponseEntity<List<AppointmentResponseDTO>> getAppointmentsByDoctor(@PathVariable Long doctorId) {
         return ResponseEntity.ok(appointmentService.getAppointmentsByDoctor(doctorId));
     }
 
     @GetMapping("/patient/{patientId}")
     @Operation(summary = "Get all appointments scheduled for a specific patient")
-    public ResponseEntity<List<Appointment>> getAppointmentsByPatient(@PathVariable Long patientId) {
+    public ResponseEntity<List<AppointmentResponseDTO>> getAppointmentsByPatient(@PathVariable Long patientId) {
         return ResponseEntity.ok(appointmentService.getAppointmentsByPatient(patientId));
     }
 
     @GetMapping("/range")
     @Operation(summary = "Get all appointments scheduled between two date-times")
-    public ResponseEntity<List<Appointment>> getAppointmentsBetweenDates(
+    public ResponseEntity<List<AppointmentResponseDTO>> getAppointmentsBetweenDates(
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime start,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime end) {
         return ResponseEntity.ok(appointmentService.getAppointmentsBetweenDates(start, end));
