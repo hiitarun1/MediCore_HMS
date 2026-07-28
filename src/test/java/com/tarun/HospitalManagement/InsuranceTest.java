@@ -1,9 +1,10 @@
 package com.tarun.HospitalManagement;
 
-import com.tarun.HospitalManagement.entity.Appointment;
-import com.tarun.HospitalManagement.entity.Insurance;
-import com.tarun.HospitalManagement.entity.Patient;
+import com.tarun.HospitalManagement.dto.request.AppointmentRequestDTO;
+import com.tarun.HospitalManagement.dto.request.InsuranceRequestDTO;
+import com.tarun.HospitalManagement.dto.response.PatientResponseDTO;
 import com.tarun.HospitalManagement.entity.Doctor;
+import com.tarun.HospitalManagement.entity.Patient;
 import com.tarun.HospitalManagement.repository.DoctorRepository;
 import com.tarun.HospitalManagement.repository.PatientRepository;
 import com.tarun.HospitalManagement.service.AppointmentService;
@@ -32,12 +33,12 @@ public class InsuranceTest {
 
     @Test
     public void testInsurance(){
-        Insurance insurance = Insurance.builder()
+        InsuranceRequestDTO insurance = InsuranceRequestDTO.builder()
                 .policyNumber("HDFC 1232")
                 .provider("HDFC")
                 .validUntil(LocalDate.of(2028,12,2)).build();
 
-        Patient p1 = insuranceService.assignInsuranceToPatient(insurance,1L);
+        PatientResponseDTO p1 = insuranceService.assignInsuranceToPatient(insurance, 1L);
         System.out.println(p1);
     }
 
@@ -55,7 +56,10 @@ public class InsuranceTest {
         patient.setEmail("john.doe@example.com");
         patient = patientRepository.save(patient);
 
-        Appointment appointment= Appointment.builder().appointmentTime(LocalDateTime.of(2026,2,14,6,12,30)).reason("cancer").build();
+        AppointmentRequestDTO appointment = AppointmentRequestDTO.builder()
+                .appointmentTime(LocalDateTime.of(2026,2,14,6,12,30))
+                .reason("cancer")
+                .build();
 
         appointmentService.createNewAppointment(appointment, doctor.getId(), patient.getId());
     }
