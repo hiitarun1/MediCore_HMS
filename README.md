@@ -1,6 +1,8 @@
 # MediCore Hospital Management System (HMS)
 
-MediCore HMS is a robust, production-ready Spring Boot 3 web application built with Java 17/21, Spring Data JPA, Security, and PostgreSQL. It has been fully refactored to enforce the **Data Transfer Object (DTO)** pattern, separating the database entity layer from the REST API endpoints to ensure security, validation, and zero recursion.
+Built to practice designing secure, scalable REST APIs with proper separation of concerns for a real-world domain — healthcare records management.
+
+MediCore HMS is a robust, production-ready Spring Boot 3 web application built with Java 17/21, Spring Data JPA, Spring Security, and PostgreSQL. It has been fully refactored to enforce the **Data Transfer Object (DTO)** pattern, separating the database entity layer from the REST API endpoints to ensure security, validation, and zero recursion.
 
 ---
 
@@ -42,13 +44,13 @@ graph TD
 ![MapStruct](https://img.shields.io/badge/MapStruct-%23F05032.svg?style=for-the-badge)
 
 *   **Backend Framework:** Spring Boot 3.4.x (Java 17/21)
+*   **Security:** Spring Security (Role-based Basic Authentication)
 *   **Database Access:** Spring Data JPA / Hibernate (ORM)
 *   **Database Engine:** PostgreSQL
 *   **API Specification:** Springdoc OpenAPI / Swagger UI
 *   **Object Mapping:** MapStruct (Compile-time code generation)
 *   **Data Validation:** Jakarta Bean Validation (Hibernate Validator)
 *   **Utility & Boilerplate:** Project Lombok
-
 
 ---
 
@@ -74,9 +76,26 @@ src/main/java/com/tarun/HospitalManagement/
 ## 🚀 Key Features
 
 *   **DTO Enforced API:** Controllers accept `@Valid` DTOs and return Response DTOs. Database entities (`Patient`, `Doctor`, etc.) never escape the Service Layer.
+*   **Role-Based Security:** All endpoints secured via Spring Security using Basic Authentication across 2 access roles (`ADMIN` / `USER`). Write operations (`POST` / `PUT` / `PATCH` / `DELETE`) are restricted to `ADMIN` access only; read operations are available to both roles.
 *   **Decoupled Relations:** Lightweight summaries (like `AppointmentSummaryDTO` and `InsuranceSummaryDTO`) are used in response objects to break cyclic JPA graphs and prevent `Infinite Recursion` / StackOverflow errors during JSON serialization.
 *   **Global Exception Handling:** Centralized handling of validation errors (`400 Bad Request` with structured field errors) and resource lookups (`404 Not Found`).
 *   **Auto-generated Mapping:** Stateless, compile-time safe object mappers using MapStruct.
+
+---
+
+## 📋 API Overview
+
+40+ endpoints across 5 resource domains, each with full CRUD and domain-specific queries.
+
+| Resource         | Endpoints | Access                        | Description                                    |
+|------------------|-----------|--------------------------------|------------------------------------------------|
+| Patients         | 8+        | Read: All · Write: Admin       | CRUD + search/filter queries                    |
+| Doctors          | 8+        | Read: All · Write: Admin       | CRUD + filter by specialty                      |
+| Appointments     | 10+       | Read: All · Write: Admin       | CRUD + status/date-based queries                |
+| Departments      | 6+        | Read: All · Write: Admin       | CRUD                                            |
+| Insurance        | 8+        | Read: All · Write: Admin       | CRUD + coverage lookup                          |
+
+> Update the exact counts above to match your current implementation before publishing.
 
 ---
 
@@ -122,3 +141,14 @@ Once the application is running, you can explore, test, and view schemas of all 
 
 *   **Swagger UI URL:** [http://localhost:8080/swagger-ui/index.html](http://localhost:8080/swagger-ui/index.html)
 *   **API Docs JSON:** [http://localhost:8080/v3/api-docs](http://localhost:8080/v3/api-docs)
+
+<!--
+  Add a screenshot of the Swagger UI here once available, e.g.:
+  ![Swagger UI](docs/swagger-ui-screenshot.png)
+-->
+
+---
+
+## 📄 License
+
+This project is licensed under the MIT License.
